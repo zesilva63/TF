@@ -2,6 +2,8 @@ import business.Task;
 import business.TaskerImpl;
 import com.AddTaskRep;
 import com.AddTaskReq;
+import com.GetTaskRep;
+import com.GetTaskReq;
 import interfaces.Tasker;
 import io.atomix.catalyst.concurrent.SingleThreadContext;
 import io.atomix.catalyst.serializer.Serializer;
@@ -67,10 +69,27 @@ public class Server {
 
         this.spread.handler(AddTaskReq.class, (m, v) -> {
             int id = reqID.incrementAndGet();
-            //System.out.println("Chegou o pedido: " + reqID + "\nMensagem: " + v.url);
+            //System.out.println("Pedido de adicionar Task: " + reqID + "\nMensagem: " + v.url);
             Task task = new Task(id, v.url);
             boolean result = this.tasker.addTask(task);
-            AddTaskRep reply = new AddTaskRep(task, result);
+            AddTaskRep reply = new AddTaskRep(v.reqID, task, result);
+
+            SpreadMessage m2 = new SpreadMessage();
+            m2.addGroup(m.getSender());
+            m2.setAgreed();
+            this.spread.multicast(m2, reply);
+        });
+
+
+        this.spread.handler(GetTaskReq.class, (m, v) -> {
+            int id = reqID.incrementAndGet();
+            //System.out.println("Pedido de atribuição de Task: " + reqID + "\nMensagem: " + v.url);
+            Task task = this.tasker.getNextTask();
+            GetTaskRep reply;
+            if (task != null)
+                reply = new GetTaskRep(v.reqID, task, true);
+            else
+                reply = new GetTaskRep(v.reqID, task, false);
 
             SpreadMessage m2 = new SpreadMessage();
             m2.addGroup(m.getSender());
@@ -80,9 +99,18 @@ public class Server {
 
     }
 
+    public void sendMsg(String group, Object obj) {
+        SpreadMessage m = new SpreadMessage();
+        m.addGroup(group);
+        m.setAgreed();
+        this.spread.multicast(m,obj);
+    }
+
 
     private void registerMessages() {
         tc.serializer().register(AddTaskRep.class);
         tc.serializer().register(AddTaskReq.class);
+        tc.serializer().register(GetTaskReq.class);
+        tc.serializer().register(GetTaskRep.class);
     }
 }

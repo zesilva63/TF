@@ -10,12 +10,14 @@ import java.util.*;
 
 public class TaskerImpl implements Tasker, CatalystSerializable {
 
+    // waiting tasks to be atributted
     private Queue<Task> waitingTasks;
-    private Map<Integer,Task> pendingTasks;
+    // tasks waiting to finish
+    private List<Task> pendingTasks;
 
     public TaskerImpl() {
         this.waitingTasks = new LinkedList<>();
-        this.pendingTasks = new LinkedHashMap<>();
+        this.pendingTasks = new ArrayList<>();
     }
 
     @Override
@@ -29,7 +31,7 @@ public class TaskerImpl implements Tasker, CatalystSerializable {
         Task t = waitingTasks.poll();
 
         if(t != null)
-            pendingTasks.put(t.getID(),t);
+            pendingTasks.add(t);
 
         return t;
     }

@@ -6,29 +6,33 @@ import io.atomix.catalyst.buffer.BufferOutput;
 import io.atomix.catalyst.serializer.CatalystSerializable;
 import io.atomix.catalyst.serializer.Serializer;
 
-public class AddTaskReq implements CatalystSerializable {
+public class GetTaskRep implements CatalystSerializable {
     public int reqID;
-    public String url;
+    public Task task;
+    public boolean result;
 
-    public AddTaskReq() {}
+    public GetTaskRep() {}
 
 
-    public AddTaskReq(int id, Task t) {
+    public GetTaskRep(int id, Task t, boolean res) {
         this.reqID = id;
-        this.url = t.getUrl();
+        this.task = t;
+        this.result = res;
     }
 
 
     @Override
     public void writeObject(BufferOutput<?> bufferOutput, Serializer serializer) {
         bufferOutput.writeInt(reqID);
-        bufferOutput.writeString(url);
+        serializer.writeObject(task,bufferOutput);
+        bufferOutput.writeBoolean(this.result);
     }
 
 
     @Override
     public void readObject(BufferInput<?> bufferInput, Serializer serializer) {
         this.reqID = bufferInput.readInt();
-        this.url = bufferInput.readString();
+        this.task = serializer.readObject(bufferInput);
+        this.result = bufferInput.readBoolean();
     }
 }
