@@ -55,8 +55,10 @@ public class Server {
             registerHandlers();
 
             try {
-                this.spread.open().thenRun(() -> System.out.println("Starting server " + this.serverID));
-                this.spread.join("servers");
+                this.spread.open().thenRun(() -> {
+                    System.out.println("Starting server " + this.serverID);
+                    this.spread.join("servers");
+                });
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -74,10 +76,7 @@ public class Server {
             boolean result = this.tasker.addTask(task);
             AddTaskRep reply = new AddTaskRep(v.reqID, task, result);
 
-            SpreadMessage m2 = new SpreadMessage();
-            m2.addGroup(m.getSender());
-            m2.setAgreed();
-            this.spread.multicast(m2, reply);
+            sendMsg(m.getSender().toString(), reply);
         });
 
 
@@ -91,10 +90,7 @@ public class Server {
             else
                 reply = new GetTaskRep(v.reqID, task, false);
 
-            SpreadMessage m2 = new SpreadMessage();
-            m2.addGroup(m.getSender());
-            m2.setAgreed();
-            this.spread.multicast(m2, reply);
+            sendMsg(m.getSender().toString(), reply);
         });
 
     }

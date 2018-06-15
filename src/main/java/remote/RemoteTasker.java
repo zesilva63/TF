@@ -41,8 +41,10 @@ public class RemoteTasker implements Tasker {
         registerHandlers();
 
         tc.execute(() -> {
-            spread.open();
-            spread.join("clients");
+            spread.open().thenRun(() -> {
+                System.out.println("Starting client " + id);
+                this.spread.join("clients");
+            });
         });
     }
 
@@ -50,11 +52,9 @@ public class RemoteTasker implements Tasker {
     @Override
     public boolean addTask(Task t) {
         this.complete = new CompletableFuture<>();
+        AddTaskReq request = new AddTaskReq(reqID.incrementAndGet(), t);
 
-        SpreadMessage m = new SpreadMessage();
-        m.addGroup("servers");
-        m.setAgreed();
-        spread.multicast(m, new AddTaskReq(reqID.incrementAndGet(), t));
+        sendMsg("servers", request);
 
         try {
             AddTaskRep reply = (AddTaskRep) this.complete.get();
@@ -76,6 +76,13 @@ public class RemoteTasker implements Tasker {
     @Override
     public boolean finishTask(Task t) {
         return false;
+    }
+
+    public void sendMsg(String group, Object obj) {
+        SpreadMessage m = new SpreadMessage();
+        m.addGroup(group);
+        m.setAgreed();
+        this.spread.multicast(m,obj);
     }
 
 
