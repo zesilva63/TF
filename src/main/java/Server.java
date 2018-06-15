@@ -1,9 +1,6 @@
 import business.Task;
 import business.TaskerImpl;
-import com.AddTaskRep;
-import com.AddTaskReq;
-import com.GetTaskRep;
-import com.GetTaskReq;
+import com.*;
 import interfaces.Tasker;
 import io.atomix.catalyst.concurrent.SingleThreadContext;
 import io.atomix.catalyst.serializer.Serializer;
@@ -23,6 +20,9 @@ public class Server {
     private Tasker tasker;
     private AtomicInteger reqID;
     private int serverID;
+    private final String serversGroup = "servers";
+    private final String clientsGroup = "clients";
+
 
 
     public static void main(String[] args) {
@@ -34,11 +34,11 @@ public class Server {
 
 
     public Server(int id) {
-        this.tc = new SingleThreadContext("srv-%d", new Serializer());
-        this.stateTransfer = null;
-        this.tasker = new TaskerImpl();
-        this.serverID = id;
-        this.reqID = new AtomicInteger(0);
+        tc = new SingleThreadContext("srv-%d", new Serializer());
+        stateTransfer = null;
+        tasker = new TaskerImpl();
+        serverID = id;
+        reqID = new AtomicInteger(0);
 
         registerMessages();
 
@@ -56,8 +56,8 @@ public class Server {
 
             try {
                 this.spread.open().thenRun(() -> {
-                    System.out.println("Starting server " + this.serverID);
-                    this.spread.join("servers");
+                    System.out.println("Starting server " + serverID);
+                    this.spread.join(serversGroup);
                 });
             } catch (Exception e) {
                 e.printStackTrace();
@@ -71,7 +71,6 @@ public class Server {
 
         this.spread.handler(AddTaskReq.class, (m, v) -> {
             int id = reqID.incrementAndGet();
-            //System.out.println("Pedido de adicionar Task: " + reqID + "\nMensagem: " + v.url);
             Task task = new Task(id, v.url);
             boolean result = this.tasker.addTask(task);
             AddTaskRep reply = new AddTaskRep(v.reqID, task, result);
@@ -81,8 +80,6 @@ public class Server {
 
 
         this.spread.handler(GetTaskReq.class, (m, v) -> {
-            int id = reqID.incrementAndGet();
-            //System.out.println("Pedido de atribuição de Task: " + reqID + "\nMensagem: " + v.url);
             Task task = this.tasker.getNextTask();
             GetTaskRep reply;
             if (task != null)
@@ -93,13 +90,21 @@ public class Server {
             sendMsg(m.getSender().toString(), reply);
         });
 
+
+        this.spread.handler(FinishTaskReq.class, (m, v) -> {
+            Boolean result = this.tasker.finishTask(v.task);
+            FinishTaskRep reply = new FinishTaskRep(v.reqID, result);
+
+            sendMsg(m.getSender().toString(), reply);
+        });
     }
+
 
     public void sendMsg(String group, Object obj) {
         SpreadMessage m = new SpreadMessage();
         m.addGroup(group);
         m.setAgreed();
-        this.spread.multicast(m,obj);
+        this.spread.multicast(m, obj);
     }
 
 
@@ -108,5 +113,7 @@ public class Server {
         tc.serializer().register(AddTaskReq.class);
         tc.serializer().register(GetTaskReq.class);
         tc.serializer().register(GetTaskRep.class);
+        tc.serializer().register(FinishTaskReq.class);
+        tc.serializer().register(FinishTaskRep.class);
     }
 }

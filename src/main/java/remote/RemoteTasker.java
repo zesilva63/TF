@@ -1,10 +1,7 @@
 package remote;
 
 import business.Task;
-import com.AddTaskRep;
-import com.AddTaskReq;
-import com.GetTaskRep;
-import com.GetTaskReq;
+import com.*;
 import interfaces.Tasker;
 import io.atomix.catalyst.concurrent.SingleThreadContext;
 import io.atomix.catalyst.serializer.Serializer;
@@ -23,12 +20,15 @@ public class RemoteTasker implements Tasker {
     private SingleThreadContext tc;
     private Spread spread;
     private CompletableFuture<Object> complete;
+    private final String serversGroup = "servers";
+    private final String clientsGroup = "clients";
+
 
 
     public RemoteTasker(int id) {
-        this.tc = new SingleThreadContext("cl-%d", new Serializer());
-        this.complete = null;
-        this.reqID = new AtomicInteger(0);
+        tc = new SingleThreadContext("cl-%d", new Serializer());
+        complete = null;
+        reqID = new AtomicInteger(0);
 
         registerMessages();
 
@@ -43,7 +43,7 @@ public class RemoteTasker implements Tasker {
         tc.execute(() -> {
             spread.open().thenRun(() -> {
                 System.out.println("Starting client " + id);
-                this.spread.join("clients");
+                this.spread.join(clientsGroup);
             });
         });
     }
@@ -51,13 +51,13 @@ public class RemoteTasker implements Tasker {
 
     @Override
     public boolean addTask(Task t) {
-        this.complete = new CompletableFuture<>();
+        complete = new CompletableFuture<>();
         AddTaskReq request = new AddTaskReq(reqID.incrementAndGet(), t);
 
-        sendMsg("servers", request);
+        sendMsg(serversGroup, request);
 
         try {
-            AddTaskRep reply = (AddTaskRep) this.complete.get();
+            AddTaskRep reply = (AddTaskRep) complete.get();
             return reply.result;
         } catch (Exception e) {
             System.out.println("Error getting reply from Add Task operation");
@@ -69,20 +69,46 @@ public class RemoteTasker implements Tasker {
 
     @Override
     public Task getNextTask() {
+        complete = new CompletableFuture<>();
+        GetTaskReq request = new GetTaskReq(reqID.incrementAndGet());
+
+        sendMsg(serversGroup, request);
+
+        try {
+            GetTaskRep reply = (GetTaskRep) complete.get();
+            if(reply.result)
+                return reply.task;
+        } catch (Exception e) {
+            System.out.println("Error getting reply from Get Task operation");
+        }
+
         return null;
     }
 
 
     @Override
     public boolean finishTask(Task t) {
+        complete = new CompletableFuture<>();
+        FinishTaskReq request = new FinishTaskReq(reqID.incrementAndGet(), t);
+
+        sendMsg(serversGroup, request);
+
+        try {
+            FinishTaskRep reply = (FinishTaskRep) complete.get();
+            return reply.result;
+        } catch (Exception e) {
+            System.out.println("Error getting reply from Finish Task operation");
+        }
+
         return false;
     }
+
 
     public void sendMsg(String group, Object obj) {
         SpreadMessage m = new SpreadMessage();
         m.addGroup(group);
         m.setAgreed();
-        this.spread.multicast(m,obj);
+        spread.multicast(m,obj);
     }
 
 
@@ -91,8 +117,9 @@ public class RemoteTasker implements Tasker {
         tc.serializer().register(AddTaskRep.class);
         tc.serializer().register(GetTaskReq.class);
         tc.serializer().register(GetTaskRep.class);
+        tc.serializer().register(FinishTaskReq.class);
+        tc.serializer().register(FinishTaskRep.class);
     }
-
 
 
     public void registerHandlers() {
@@ -103,6 +130,11 @@ public class RemoteTasker implements Tasker {
         });
 
         this.spread.handler(GetTaskRep.class, (m, v) -> {
+            if(complete != null && v.reqID == reqID.intValue())
+                complete.complete(v);
+        });
+
+        this.spread.handler(FinishTaskRep.class, (m, v) -> {
             if(complete != null && v.reqID == reqID.intValue())
                 complete.complete(v);
         });

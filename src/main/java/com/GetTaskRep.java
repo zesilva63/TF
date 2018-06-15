@@ -11,6 +11,7 @@ public class GetTaskRep implements CatalystSerializable {
     public Task task;
     public boolean result;
 
+
     public GetTaskRep() {}
 
 
@@ -25,14 +26,14 @@ public class GetTaskRep implements CatalystSerializable {
     public void writeObject(BufferOutput<?> bufferOutput, Serializer serializer) {
         bufferOutput.writeInt(reqID);
         serializer.writeObject(task,bufferOutput);
-        bufferOutput.writeBoolean(this.result);
+        bufferOutput.writeBoolean(result);
     }
 
 
     @Override
     public void readObject(BufferInput<?> bufferInput, Serializer serializer) {
-        this.reqID = bufferInput.readInt();
-        this.task = serializer.readObject(bufferInput);
-        this.result = bufferInput.readBoolean();
+        reqID = bufferInput.readInt();
+        task = serializer.readObject(bufferInput);
+        result = bufferInput.readBoolean();
     }
 }

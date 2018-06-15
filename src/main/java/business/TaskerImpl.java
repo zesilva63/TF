@@ -7,17 +7,17 @@ import io.atomix.catalyst.serializer.CatalystSerializable;
 import io.atomix.catalyst.serializer.Serializer;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public class TaskerImpl implements Tasker, CatalystSerializable {
 
-    // waiting tasks to be atributted
-    private Queue<Task> waitingTasks;
-    // tasks waiting to finish
-    private List<Task> pendingTasks;
+    private Queue<Task> waitingTasks;    // waiting tasks to be atributted
+    private List<Task> pendingTasks;    // tasks waiting to finish
+
 
     public TaskerImpl() {
-        this.waitingTasks = new LinkedList<>();
-        this.pendingTasks = new ArrayList<>();
+        waitingTasks = new LinkedList<>();
+        pendingTasks = new ArrayList<>();
     }
 
     @Override
@@ -38,11 +38,11 @@ public class TaskerImpl implements Tasker, CatalystSerializable {
 
 
     @Override
-    public synchronized boolean finishTask(Task t) {
-        int taskID = t.getID();
-        Task task = pendingTasks.remove(taskID);
+    public synchronized boolean finishTask(Task task) {
+        Predicate<Task> taskPredicate = t -> t.getID() == task.getID();
+        boolean result = pendingTasks.removeIf(taskPredicate);
 
-        return task != null;
+        return result;
     }
 
 

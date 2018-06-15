@@ -68,15 +68,15 @@ public class Task implements CatalystSerializable {
 
     @Override
     public void writeObject(BufferOutput<?> bufferOutput, Serializer serializer) {
-        bufferOutput.writeString(this.client);
-        bufferOutput.writeInt(this.id);
-        bufferOutput.writeString(this.url);
+        bufferOutput.writeString(client);
+        bufferOutput.writeInt(id);
+        bufferOutput.writeString(url);
     }
 
     @Override
     public void readObject(BufferInput<?> bufferInput, Serializer serializer) {
-        this.client = bufferInput.readString();
-        this.id = bufferInput.readInt();
-        this.url = bufferInput.readString();
+        client = bufferInput.readString();
+        id = bufferInput.readInt();
+        url = bufferInput.readString();
     }
 }

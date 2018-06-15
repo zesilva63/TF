@@ -26,6 +26,6 @@ public class GetTaskReq implements CatalystSerializable {
 
     @Override
     public void readObject(BufferInput<?> bufferInput, Serializer serializer) {
-        this.reqID = bufferInput.readInt();
+        reqID = bufferInput.readInt();
     }
 }

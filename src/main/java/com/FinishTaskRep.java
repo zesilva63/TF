@@ -1,31 +1,27 @@
 package com;
 
-import business.Task;
 import io.atomix.catalyst.buffer.BufferInput;
 import io.atomix.catalyst.buffer.BufferOutput;
 import io.atomix.catalyst.serializer.CatalystSerializable;
 import io.atomix.catalyst.serializer.Serializer;
 
-public class AddTaskRep implements CatalystSerializable {
+public class FinishTaskRep implements CatalystSerializable{
     public int reqID;
-    public Task task;
     public boolean result;
 
 
-    public AddTaskRep() {}
+    public FinishTaskRep() {}
 
 
-    public AddTaskRep(int id, Task task, boolean res) {
-        this.reqID = id;
-        this.task = task;
-        this.result = res;
+    public FinishTaskRep(int reqID, boolean result) {
+        this.reqID = reqID;
+        this.result = result;
     }
 
 
     @Override
     public void writeObject(BufferOutput<?> bufferOutput, Serializer serializer) {
         bufferOutput.writeInt(reqID);
-        serializer.writeObject(task, bufferOutput);
         bufferOutput.writeBoolean(result);
     }
 
@@ -33,7 +29,6 @@ public class AddTaskRep implements CatalystSerializable {
     @Override
     public void readObject(BufferInput<?> bufferInput, Serializer serializer) {
         reqID = bufferInput.readInt();
-        task = serializer.readObject(bufferInput);
         result = bufferInput.readBoolean();
     }
 }
