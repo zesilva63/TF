@@ -55,8 +55,13 @@ public class Server extends ActiveServer {
 
 
         handler(FinishTaskReq.class, (m, v) -> {
+            System.out.println(tasker.print());
+
             Boolean result = this.tasker.finishTask(v.task);
+            System.out.println(tasker.print());
+
             FinishTaskRep reply = new FinishTaskRep(v.reqID, result);
+
 
             multicast(m.getSender().toString(), reply);
         });

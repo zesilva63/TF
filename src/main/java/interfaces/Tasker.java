@@ -19,4 +19,6 @@ public interface Tasker {
 
     /* Finishes a task executed attributed to a client */
     boolean finishTask(Task t);
+
+    String print();
 }

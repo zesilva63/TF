@@ -22,6 +22,9 @@ public class Client {
 
         Task t2 = tasker.getNextTask();
         System.out.println("TASK atribuida " + t2.getUrl());
+        //Task t3 = new Task(1,"");
+        boolean b2 = tasker.finishTask(t2);
+        System.out.println("Finalizou pedido " + b);
 
     }
 }

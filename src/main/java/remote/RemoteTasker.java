@@ -87,6 +87,11 @@ public class RemoteTasker implements Tasker {
 
 
     @Override
+    public String print() {
+        return "";
+    }
+
+    @Override
     public boolean finishTask(Task t) {
         complete = new CompletableFuture<>();
         FinishTaskReq request = new FinishTaskReq(reqID.incrementAndGet(), t);
@@ -145,23 +150,31 @@ public class RemoteTasker implements Tasker {
     public void registerHandlers() {
 
         spread.handler(AddTaskRep.class, (m, v) -> {
-            if(complete != null && v.reqID == reqID.intValue())
+            if(complete != null && v.reqID == reqID.intValue()) {
+                reqID.incrementAndGet();
                 complete.complete(v);
+            }
         });
 
         spread.handler(GetTaskRep.class, (m, v) -> {
-            if(complete != null && v.reqID == reqID.intValue())
+            if(complete != null && v.reqID == reqID.intValue()) {
+                reqID.incrementAndGet();
                 complete.complete(v);
+            }
         });
 
         spread.handler(FinishTaskRep.class, (m, v) -> {
-            if(complete != null && v.reqID == reqID.intValue())
+            if(complete != null && v.reqID == reqID.intValue()) {
+                reqID.incrementAndGet();
                 complete.complete(v);
+            }
         });
 
         spread.handler(ReallocateTasksRep.class, (m, v) -> {
-            if(complete != null && v.reqID == reqID.intValue())
+            if(complete != null && v.reqID == reqID.intValue()) {
+                reqID.incrementAndGet();
                 complete.complete(v);
+            }
         });
 
         spread.handler(MembershipInfo.class, (m, v) -> {
