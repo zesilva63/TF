@@ -2,28 +2,12 @@ import business.Task;
 import business.TaskerImpl;
 import com.*;
 import interfaces.Tasker;
-import io.atomix.catalyst.concurrent.SingleThreadContext;
 import io.atomix.catalyst.serializer.Serializer;
-import pt.haslab.ekit.Spread;
-import spread.SpreadException;
-import spread.SpreadMessage;
-
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class Server {
-
-    private SingleThreadContext tc;
-    private CompletableFuture<String> stateTransfer;
-    private Spread spread;
-    private io.atomix.catalyst.transport.Address address;
+public class Server extends ActiveServer {
     private Tasker tasker;
     private AtomicInteger reqID;
-    private int serverID;
-    private final String serversGroup = "servers";
-    private final String clientsGroup = "clients";
-
-
 
     public static void main(String[] args) {
         int id = Integer.parseInt(args[0]);
@@ -31,97 +15,69 @@ public class Server {
         server.start();
     }
 
-
-
     public Server(int id) {
-        tc = new SingleThreadContext("srv-%d", new Serializer());
-        stateTransfer = null;
+        super(id);
+
         tasker = new TaskerImpl();
-        serverID = id;
         reqID = new AtomicInteger(0);
-
-        registerMessages();
-
-        try {
-            spread = new Spread("server" + id,false);
-        }catch (SpreadException e) {
-            e.printStackTrace();
-        }
     }
 
-
-    public void start() {
-        this.tc.execute(() -> {
-            registerHandlers();
-
-            try {
-                this.spread.open().thenRun(() -> {
-                    System.out.println("Starting server " + serverID);
-                    this.spread.join(serversGroup);
-                });
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-
-        });
+    public void registerMessages(Serializer s) {
+        s.register(AddTaskRep.class);
+        s.register(AddTaskReq.class);
+        s.register(GetTaskReq.class);
+        s.register(GetTaskRep.class);
+        s.register(FinishTaskReq.class);
+        s.register(FinishTaskRep.class);
+        s.register(ReallocateTasksReq.class);
+        s.register(ReallocateTasksRep.class);
     }
 
-
-    private void registerHandlers() {
-
-        spread.handler(AddTaskReq.class, (m, v) -> {
+    public void registerHandlers() {
+        handler(AddTaskReq.class, (m, v) -> {
             int id = reqID.incrementAndGet();
             Task task = new Task(id, v.url);
             boolean result = this.tasker.addTask(task);
             AddTaskRep reply = new AddTaskRep(v.reqID, task, result);
 
-            sendMsg(m.getSender().toString(), reply);
+            multicast(m.getSender().toString(), reply);
         });
 
 
-        spread.handler(GetTaskReq.class, (m, v) -> {
+        handler(GetTaskReq.class, (m, v) -> {
             Task task = this.tasker.getNextTask();
             GetTaskRep reply;
             task.setClient(m.getSender().toString());
             reply = new GetTaskRep(v.reqID, task);
 
-            sendMsg(m.getSender().toString(), reply);
+            multicast(m.getSender().toString(), reply);
         });
 
 
-        spread.handler(FinishTaskReq.class, (m, v) -> {
+        handler(FinishTaskReq.class, (m, v) -> {
             Boolean result = this.tasker.finishTask(v.task);
             FinishTaskRep reply = new FinishTaskRep(v.reqID, result);
 
-            sendMsg(m.getSender().toString(), reply);
+            multicast(m.getSender().toString(), reply);
         });
 
 
-        spread.handler(ReallocateTasksReq.class, (m, v) -> {
+        handler(ReallocateTasksReq.class, (m, v) -> {
             Boolean result = this.tasker.reallocateTasks(v.client);
             ReallocateTasksRep reply = new ReallocateTasksRep(v.reqID, result);
 
-            sendMsg(m.getSender().toString(), reply);
+            multicast(m.getSender().toString(), reply);
         });
     }
 
-
-    public void sendMsg(String group, Object obj) {
-        SpreadMessage m = new SpreadMessage();
-        m.addGroup(group);
-        m.setAgreed();
-        this.spread.multicast(m, obj);
+    @Override
+    public StateRep saveState() {
+        return new StateRep((TaskerImpl) tasker, reqID.get());
     }
 
-
-    private void registerMessages() {
-        tc.serializer().register(AddTaskRep.class);
-        tc.serializer().register(AddTaskReq.class);
-        tc.serializer().register(GetTaskReq.class);
-        tc.serializer().register(GetTaskRep.class);
-        tc.serializer().register(FinishTaskReq.class);
-        tc.serializer().register(FinishTaskRep.class);
-        tc.serializer().register(ReallocateTasksReq.class);
-        tc.serializer().register(ReallocateTasksRep.class);
+    @Override
+    public void recoverState(StateRep rep) {
+        tasker = rep.getTasker();
+        reqID = new AtomicInteger(rep.getReqId());
     }
 }

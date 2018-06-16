@@ -1,6 +1,7 @@
 package interfaces;
 
 import business.Task;
+import io.atomix.catalyst.serializer.CatalystSerializable;
 
 /*
 * Represents the task manager.
