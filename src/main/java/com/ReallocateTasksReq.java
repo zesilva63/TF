@@ -1,35 +1,33 @@
 package com;
 
-import business.Task;
 import io.atomix.catalyst.buffer.BufferInput;
 import io.atomix.catalyst.buffer.BufferOutput;
 import io.atomix.catalyst.serializer.CatalystSerializable;
 import io.atomix.catalyst.serializer.Serializer;
 
-public class GetTaskRep implements CatalystSerializable {
+public class ReallocateTasksReq implements CatalystSerializable {
     public int reqID;
-    public Task task;
+    public String client;
 
 
-    public GetTaskRep() {}
+    public ReallocateTasksReq() {}
 
 
-    public GetTaskRep(int id, Task t) {
-        this.reqID = id;
-        this.task = t;
+    public ReallocateTasksReq(int reqID, String client) {
+        this.reqID = reqID;
+        this.client = client;
     }
 
 
     @Override
     public void writeObject(BufferOutput<?> bufferOutput, Serializer serializer) {
         bufferOutput.writeInt(reqID);
-        serializer.writeObject(task,bufferOutput);
+        bufferOutput.writeString(client);
     }
-
 
     @Override
     public void readObject(BufferInput<?> bufferInput, Serializer serializer) {
         reqID = bufferInput.readInt();
-        task = serializer.readObject(bufferInput);
+        client = bufferInput.readString();
     }
 }

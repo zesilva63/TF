@@ -19,5 +19,9 @@ public class Client {
         Task t = new Task("Tarefa 1");
         boolean b  = tasker.addTask(t);
         System.out.println("Resposta ao pedido " + b);
+
+        Task t2 = tasker.getNextTask();
+        System.out.println("TASK atribuida " + t2.getUrl());
+
     }
 }

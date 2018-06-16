@@ -11,7 +11,7 @@ import java.util.function.Predicate;
 
 public class TaskerImpl implements Tasker, CatalystSerializable {
 
-    private Queue<Task> waitingTasks;    // waiting tasks to be atributted
+    private Deque<Task> waitingTasks;    // waiting tasks to be atributted
     private List<Task> pendingTasks;    // tasks waiting to finish
 
 
@@ -19,6 +19,7 @@ public class TaskerImpl implements Tasker, CatalystSerializable {
         waitingTasks = new LinkedList<>();
         pendingTasks = new ArrayList<>();
     }
+
 
     @Override
     public synchronized boolean addTask(Task t) {
@@ -28,21 +29,28 @@ public class TaskerImpl implements Tasker, CatalystSerializable {
 
     @Override
     public synchronized Task getNextTask() {
-        Task t = waitingTasks.poll();
+        Task t = waitingTasks.pollFirst();
 
-        if(t != null)
+        if(t != null) {
             pendingTasks.add(t);
+        }
 
         return t;
     }
 
 
     @Override
+    public synchronized boolean reallocateTasks(String cli) {
+        Predicate<Task> taskPredicate = t -> t.getClient().equals(cli);
+        this.pendingTasks.stream().filter(taskPredicate).forEach(t -> waitingTasks.addFirst(t));
+        return pendingTasks.removeIf(taskPredicate);
+    }
+
+
+    @Override
     public synchronized boolean finishTask(Task task) {
         Predicate<Task> taskPredicate = t -> t.getID() == task.getID();
-        boolean result = pendingTasks.removeIf(taskPredicate);
-
-        return result;
+        return pendingTasks.removeIf(taskPredicate);
     }
 
 

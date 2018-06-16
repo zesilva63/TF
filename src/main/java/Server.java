@@ -69,7 +69,7 @@ public class Server {
 
     private void registerHandlers() {
 
-        this.spread.handler(AddTaskReq.class, (m, v) -> {
+        spread.handler(AddTaskReq.class, (m, v) -> {
             int id = reqID.incrementAndGet();
             Task task = new Task(id, v.url);
             boolean result = this.tasker.addTask(task);
@@ -79,21 +79,27 @@ public class Server {
         });
 
 
-        this.spread.handler(GetTaskReq.class, (m, v) -> {
+        spread.handler(GetTaskReq.class, (m, v) -> {
             Task task = this.tasker.getNextTask();
             GetTaskRep reply;
-            if (task != null)
-                reply = new GetTaskRep(v.reqID, task, true);
-            else
-                reply = new GetTaskRep(v.reqID, task, false);
+            task.setClient(m.getSender().toString());
+            reply = new GetTaskRep(v.reqID, task);
 
             sendMsg(m.getSender().toString(), reply);
         });
 
 
-        this.spread.handler(FinishTaskReq.class, (m, v) -> {
+        spread.handler(FinishTaskReq.class, (m, v) -> {
             Boolean result = this.tasker.finishTask(v.task);
             FinishTaskRep reply = new FinishTaskRep(v.reqID, result);
+
+            sendMsg(m.getSender().toString(), reply);
+        });
+
+
+        spread.handler(ReallocateTasksReq.class, (m, v) -> {
+            Boolean result = this.tasker.reallocateTasks(v.client);
+            ReallocateTasksRep reply = new ReallocateTasksRep(v.reqID, result);
 
             sendMsg(m.getSender().toString(), reply);
         });
@@ -115,5 +121,7 @@ public class Server {
         tc.serializer().register(GetTaskRep.class);
         tc.serializer().register(FinishTaskReq.class);
         tc.serializer().register(FinishTaskRep.class);
+        tc.serializer().register(ReallocateTasksReq.class);
+        tc.serializer().register(ReallocateTasksRep.class);
     }
 }

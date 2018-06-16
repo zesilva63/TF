@@ -13,6 +13,9 @@ public interface Tasker {
     /* Returns the next task for a client */
     Task getNextTask();
 
+    /* Add tasks from client disconencted */
+    boolean reallocateTasks(String client);
+
     /* Finishes a task executed attributed to a client */
     boolean finishTask(Task t);
 }
