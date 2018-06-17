@@ -7,9 +7,9 @@ import io.atomix.catalyst.serializer.CatalystSerializable;
 import io.atomix.catalyst.serializer.Serializer;
 
 public class Task implements CatalystSerializable {
-    private String client;
-    private int id;
-    private String url;
+    private String client = "";
+    private int id = 0;
+    private String url = "";
 
     public Task() {}
 
@@ -53,6 +53,10 @@ public class Task implements CatalystSerializable {
         this.url = url;
     }
 
+    @Override
+    public String toString() {
+        return url;
+    }
 
     @Override
     public boolean equals(Object o) {

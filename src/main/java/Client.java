@@ -15,11 +15,10 @@ public class Client {
     }
 
     public static void main(String[] args) throws InterruptedException {
-        //int id = Integer.parseInt(args[0]);
-        int id = 1;
+        int id = Integer.parseInt(args[0]);
         Tasker tasker = new RemoteTasker(id);
 
-        Task t = new Task("Tarefa 1");
+        Task t = new Task("Tarefa"+id);
         boolean b  = tasker.addTask(t);
         System.out.println("Resposta ao pedido " + b);
 

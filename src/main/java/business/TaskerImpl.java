@@ -60,14 +60,21 @@ public class TaskerImpl implements Tasker, CatalystSerializable {
 
     @Override
     public void writeObject(BufferOutput<?> bufferOutput, Serializer serializer) {
-        serializer.writeObject(waitingTasks, bufferOutput);
         serializer.writeObject(pendingTasks, bufferOutput);
+
+        bufferOutput.writeInt(waitingTasks.size());
+        for(Task t: waitingTasks)
+            serializer.writeObject(t, bufferOutput);
     }
 
 
     @Override
     public void readObject(BufferInput<?> bufferInput, Serializer serializer) {
-        waitingTasks = serializer.readObject(bufferInput);
         pendingTasks = serializer.readObject(bufferInput);
+
+        int size = bufferInput.readInt();
+        waitingTasks = new LinkedList<>();
+        for (int i = 0; i < size; i++)
+            waitingTasks.add(serializer.readObject(bufferInput));
     }
 }

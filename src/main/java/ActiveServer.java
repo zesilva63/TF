@@ -51,9 +51,6 @@ public abstract class ActiveServer {
                 spread.handler(cls, (m,v) -> {
                     BiConsumer<SpreadMessage, Object> handler = handlers.get(v.getClass());
 
-                    if (handler == null)
-                        return;
-
                     if (active)
                         handler.accept(m, v);
 
