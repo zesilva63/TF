@@ -3,6 +3,7 @@ import business.TaskerImpl;
 import com.*;
 import interfaces.Tasker;
 import io.atomix.catalyst.serializer.Serializer;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Server extends ActiveServer {
@@ -35,6 +36,7 @@ public class Server extends ActiveServer {
 
     public void registerHandlers() {
         handler(AddTaskReq.class, (m, v) -> {
+
             int id = reqID.incrementAndGet();
             Task task = new Task(id, v.url);
             boolean result = this.tasker.addTask(task);
@@ -45,8 +47,9 @@ public class Server extends ActiveServer {
 
 
         handler(GetTaskReq.class, (m, v) -> {
-            Task task = this.tasker.getNextTask();
             GetTaskRep reply;
+            Task task = this.tasker.getNextTask();
+
             task.setClient(m.getSender().toString());
             reply = new GetTaskRep(v.reqID, task);
 
@@ -55,19 +58,16 @@ public class Server extends ActiveServer {
 
 
         handler(FinishTaskReq.class, (m, v) -> {
-            System.out.println(tasker.print());
 
             Boolean result = this.tasker.finishTask(v.task);
-            System.out.println(tasker.print());
-
             FinishTaskRep reply = new FinishTaskRep(v.reqID, result);
-
 
             multicast(m.getSender().toString(), reply);
         });
 
 
         handler(ReallocateTasksReq.class, (m, v) -> {
+
             Boolean result = this.tasker.reallocateTasks(v.client);
             ReallocateTasksRep reply = new ReallocateTasksRep(v.reqID, result);
 

@@ -34,7 +34,7 @@ public class RemoteTasker implements Tasker {
         registerMessages();
 
         try {
-            spread = new Spread("client" + id,false);
+            spread = new Spread("client" + id,true);
         }catch (SpreadException e) {
             e.printStackTrace();
         }
