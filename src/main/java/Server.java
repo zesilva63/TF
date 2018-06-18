@@ -42,7 +42,6 @@ public class Server extends ActiveServer {
             boolean result = this.tasker.addTask(task);
             AddTaskRep reply = new AddTaskRep(v.reqID, task, result);
 
-            System.out.println(tasker.print());
             multicast(m.getSender().toString(), reply);
         });
 
@@ -54,7 +53,6 @@ public class Server extends ActiveServer {
             task.setClient(m.getSender().toString());
             reply = new GetTaskRep(v.reqID, task);
 
-            System.out.println(tasker.print());
             multicast(m.getSender().toString(), reply);
         });
 
@@ -64,7 +62,6 @@ public class Server extends ActiveServer {
             Boolean result = this.tasker.finishTask(v.task);
             FinishTaskRep reply = new FinishTaskRep(v.reqID, result);
 
-            System.out.println(tasker.print());
             multicast(m.getSender().toString(), reply);
         });
 
@@ -74,7 +71,6 @@ public class Server extends ActiveServer {
             Boolean result = this.tasker.reallocateTasks(v.client);
             ReallocateTasksRep reply = new ReallocateTasksRep(v.reqID, result);
 
-            System.out.println(tasker.print());
             multicast(m.getSender().toString(), reply);
         });
     }
@@ -88,6 +84,5 @@ public class Server extends ActiveServer {
     public void recoverState(StateRep rep) {
         tasker = rep.getTasker();
         reqID = new AtomicInteger(rep.getReqId());
-        System.out.println(tasker.print());
     }
 }

@@ -55,7 +55,7 @@ public class Task implements CatalystSerializable {
 
     @Override
     public String toString() {
-        return url;
+        return "id: " + id + " client: " + client + " url: " + url;
     }
 
     @Override

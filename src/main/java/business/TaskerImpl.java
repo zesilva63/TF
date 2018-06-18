@@ -26,10 +26,6 @@ public class TaskerImpl implements Tasker, CatalystSerializable {
         return this.waitingTasks.add(t);
     }
 
-    @Override
-    public synchronized String print() {
-        return "Waiting " + waitingTasks.toString() + "\n" + "Pending " + pendingTasks.toString();
-    }
 
     @Override
     public synchronized Task getNextTask() {

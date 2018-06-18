@@ -31,6 +31,7 @@ public class RemoteTasker implements Tasker {
         complete = null;
         reqID = new AtomicInteger(0);
 
+
         registerMessages();
 
         try {
@@ -77,6 +78,7 @@ public class RemoteTasker implements Tasker {
 
         try {
             GetTaskRep reply = (GetTaskRep) complete.get();
+
             return reply.task;
         } catch (Exception e) {
             System.out.println("Error getting reply from Get Task operation");
@@ -85,11 +87,6 @@ public class RemoteTasker implements Tasker {
         return null;
     }
 
-
-    @Override
-    public String print() {
-        return "";
-    }
 
     @Override
     public boolean finishTask(Task t) {
@@ -127,7 +124,7 @@ public class RemoteTasker implements Tasker {
     }
 
 
-    public void sendMsg(String group, Object obj) {
+    private void sendMsg(String group, Object obj) {
         SpreadMessage m = new SpreadMessage();
         m.addGroup(group);
         m.setAgreed();
@@ -135,7 +132,7 @@ public class RemoteTasker implements Tasker {
     }
 
 
-    public void registerMessages() {
+    private void registerMessages() {
         tc.serializer().register(AddTaskReq.class);
         tc.serializer().register(AddTaskRep.class);
         tc.serializer().register(GetTaskReq.class);
@@ -147,7 +144,7 @@ public class RemoteTasker implements Tasker {
     }
 
 
-    public void registerHandlers() {
+    private void registerHandlers() {
 
         spread.handler(AddTaskRep.class, (m, v) -> {
             if(complete != null && v.reqID == reqID.intValue()) {

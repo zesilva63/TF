@@ -3,6 +3,8 @@ package interfaces;
 import business.Task;
 import io.atomix.catalyst.serializer.CatalystSerializable;
 
+import java.util.List;
+
 /*
 * Represents the task manager.
 * */
@@ -19,6 +21,4 @@ public interface Tasker {
 
     /* Finishes a task executed attributed to a client */
     boolean finishTask(Task t);
-
-    String print();
 }
